@@ -1,0 +1,10 @@
+---
+# defaults file for coffeemaker_midday
+
+# title: Temperature coffee
+# required: True
+temperature: 95
+
+# Title: Adjust heat if necessary
+# required: True
+threshold_adjust_heat: 90

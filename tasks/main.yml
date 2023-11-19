@@ -1,0 +1,70 @@
+---
+# tasks file for coffeemaker_midday
+- name: Block start coffee maker
+  block:
+    - name: Start brewing coffee
+      ansible.builtin.uri:
+        url: "http://iot-coffeemaker/start"
+        method: GET
+
+    - name: Wait for 3 minutes
+      ansible.builtin.pause:
+        minutes: wait_brewing
+
+    - name: Check initial coffee temperature
+      ansible.builtin.uri:
+        url: "http://iot-coffeemaker/temperature"
+        method: GET
+      register: initial_coffee_temp
+
+    - name: Adjust heat if necessary
+      ansible.builtin.uri:
+        url: "http://iot-coffeemaker/adjust-heat"
+        method: POST
+        body_format: json
+        body: {"target_temp": "{{ temperature | int }}"}
+      when: initial_coffee_temp.json.temperature < threshold_adjust_heat
+
+  rescue:
+    - name: Notify of initial brewing failure
+      ansible.builtin.debug:
+        msg: "Initial brewing failed, please check the machine!"
+
+- name: Block check coffee maker
+  block:
+    - name: Wait for additional 2 minutes
+      ansible.builtin.pause:
+        minutes: 2
+
+    - name: Check final coffee temperature
+      ansible.builtin.uri:
+        url: "http://iot-coffeemaker/temperature"
+        method: GET
+      register: final_coffee_temp
+
+    - name: Notify if coffee is at perfect temperature
+      ansible.builtin.debug:
+        msg: "Coffee is at the perfect temperature!"
+      when: final_coffee_temp.json.temperature == temperature
+
+  rescue:
+    - name: Notify of temperature issue
+      ansible.builtin.debug:
+        msg: "There's an issue with the coffee temperature. Please check!"
+
+- name: Block serve coffee
+  block:
+    - name: Prepare for serving
+      ansible.builtin.uri:
+        url: "http://iot-coffeemaker/prepare-serving"
+        method: GET
+
+    - name: Notify that coffee is ready to serve
+      ansible.builtin.debug:
+        msg: "Coffee is ready to serve. Enjoy your cup!"
+
+  always:
+    - name: Turn off coffee maker
+      ansible.builtin.uri:
+        url: "http://iot-coffeemaker/turnoff"
+        method: GET

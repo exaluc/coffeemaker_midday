@@ -1,0 +1,10 @@
+---
+# vars file for coffeemaker_midday
+
+# title: Wait brewing
+# required: true
+wait_brewing: 3
+
+# title: Wait additional time
+# required: true
+wait_additional: 2
